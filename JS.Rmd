@@ -1,0 +1,93 @@
+---
+title: "JS"
+author: "BMQH3"
+date: "2023-01-03"
+output: html_document
+---
+
+Libraries
+
+```{r}
+library(tidyverse)
+library(sf)
+library(tmap)
+library(spatstat)
+library(sp)
+```
+
+Loading CSV Data
+
+```{r}
+deaths <- read_csv("Houses_with_Cholera_deaths.csv",  show_col_types = FALSE)
+deaths <- deaths %>% drop_na()
+deaths <-deaths%>%
+
+  st_as_sf(., coords = c("Longitude", "Latitude"), 
+           crs = 4326)
+
+
+nondeaths <- read_csv("Houses_with_no_Cholera_deaths.csv",  show_col_types = FALSE)
+nondeaths <- nondeaths %>% drop_na()
+nondeaths <-nondeaths%>%
+  
+    st_as_sf(., coords = c("Longitude", "Latitude"), 
+           crs = 4326)
+
+```
+
+```{r}
+
+outline <- st_read("statistical-gis-boundaries-london/ESRI/OA_2011_London_gen_MHW.shp")
+
+jsarea <- st_read("Area/John_Snow_Study_Area.shp", crs = 4326)
+
+```
+
+
+```{r}
+newbox <- st_bbox(outline %>% filter(LSOA11CD %in% c("E01033595", 'E01033596', 'E01004734', "E01004763", "E01004765")))
+```
+
+```{r}
+tm_shape(outline, bbox = newbox) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(jsarea) +
+  tm_polygons(col = "pink", alpha = 0.5 )
+```
+
+Pumps and deaths shapefile
+
+```{r}
+chdeaths <- st_read("SnowGIS/Cholera_Deaths.shp")
+pumps <- st_read("SnowGIS/Pumps.shp")
+```
+
+```{r}
+tm_shape(outline, bbox = newbox) +
+  tm_polygons(col = NA, alpha = 0.5) +
+  tm_shape(jsarea) +
+  tm_polygons(col = "pink", alpha = 0.5) +
+  tm_shape(chdeaths) +
+  tm_dots(col = "red") +
+  tm_shape(pumps) +
+  tm_dots (col = "green") +
+  tm_add_legend(title = 'Deaths',type = 'text')+
+    tm_add_legend(labels = 'deaths', col = "red") +
+    tm_add_legend(labels = 'pumps', col = "green")
+
+tm_shape(outline, bbox = newbox) +
+  tm_polygons(col = NA, alpha = 0.5) +
+  tm_shape(jsarea) +
+  tm_polygons(col = "pink", alpha = 0.5) +
+  tm_shape(deaths) +
+  tm_dots(col = "red") +
+  tm_shape(nondeaths) +
+  tm_dots (col = "blue") +
+  tm_shape(pumps) +
+  tm_dots (col = "green") +
+    tm_add_legend(title = 'Deaths and non-deaths',type = 'text')+
+    tm_add_legend(labels = 'non-deaths', col = "blue") +
+    tm_add_legend(labels = 'deaths', col = "red") +
+    tm_add_legend(labels = 'pumps', col = "green")
+```
+
